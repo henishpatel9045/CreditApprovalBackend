@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "creditapprovalbackend"
+version = "0.1.0"
+description = "It's a backend for Credit Approval System."
+authors = ["Henish Patel <200120107182@git.org.in>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+django = "^5.0.2"
+djangorestframework = "^3.14.0"
+python-decouple = "^3.8"
+gunicorn = "^21.2.0"
+psycopg2 = "^2.9.9"
+pandas = "^2.2.0"
+openpyxl = "^3.1.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
