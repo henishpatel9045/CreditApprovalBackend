@@ -26,3 +26,27 @@ class CustomerSerializer(serializers.ModelSerializer):
             validated_data["monthly_salary"]
         )
         return super().create(validated_data)
+
+
+class LoanRequestBodySerializer(serializers.Serializer):
+    """
+    Serializer for the request body of creating and checking eligibility of a loan.
+    """
+
+    customer_id = serializers.IntegerField()
+    loan_amount = serializers.FloatField()
+    interest_rate = serializers.FloatField()
+    tenure = serializers.IntegerField()
+
+
+class LoanEligibilityResponseSerializer(serializers.Serializer):
+    """
+    Serializer for the response of the loan eligibility check API.
+    """
+
+    customer_id = serializers.IntegerField()
+    approval = serializers.BooleanField()
+    interest_rate = serializers.FloatField()
+    corrected_interest_rate = serializers.FloatField()
+    tenure = serializers.IntegerField()
+    monthly_installment = serializers.FloatField()
