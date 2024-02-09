@@ -1,0 +1,5 @@
+LOAN_SUCCESSFUL_MESSAGE = "Eligible for loan."
+LOAN_UNSUCCESSFUL_MONTHLY_PAYMENT_EXCEED_50_MESSAGE = "Monthly payment exceeds 50% of salary."
+LOAN_UNSUCCESSFUL_12_MESSAGE = "Interest rate updated to 12% for low credit score."
+LOAN_UNSUCCESSFUL_16_MESSAGE = "Interest rate updated to 16% for low credit score."
+LOAN_UNSUCCESSFUL_MESSAGE = "Eligible for loan."

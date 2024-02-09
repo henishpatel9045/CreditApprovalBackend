@@ -2,6 +2,13 @@ from datetime import datetime, timedelta
 from django.db.models import Count, Sum, When, Case, F, Expression, fields, Value, Q
 
 from core.models import Customer, Loan
+from core.constants import (
+    LOAN_SUCCESSFUL_MESSAGE,
+    LOAN_UNSUCCESSFUL_12_MESSAGE,
+    LOAN_UNSUCCESSFUL_16_MESSAGE,
+    LOAN_UNSUCCESSFUL_MESSAGE,
+    LOAN_UNSUCCESSFUL_MONTHLY_PAYMENT_EXCEED_50_MESSAGE,
+)
 
 
 def calculate_emis_till_date(
@@ -20,7 +27,7 @@ def calculate_emis_till_date(
     return total_emis
 
 
-def calculate_credit_score(customer: Customer) -> (int, dict):
+def calculate_credit_score(customer: Customer) -> tuple[int, dict]:
     """Calculate the credit score of a customer based on the number of loans and EMIs paid on time
 
     ## Algorithm:
@@ -110,14 +117,14 @@ def calculate_emi(
 
 def determine_loan_eligibility(
     loan_amount: float, interest_rate: float, tenure: int, customer: Customer
-) -> (bool, bool, dict, str):
+) -> tuple[bool, bool, dict, str]:
     """Determine the loan eligibility of a customer based on the credit score and monthly payment
 
     Returns:
     - A tuple of two boolean values and a dictionary (is_eligible, is_interest_rate_updated, loan_data, message)
         - is_eligible: `True` if the customer is eligible for the loan, `False` otherwise
         - is_interest_rate_updated: `True` if the interest rate is updated, `False` otherwise
-        - loan_data: 
+        - loan_data:
             - monthly_payment: The monthly payment for the loan
             - interest_rate: The updated interest rate for the loan
         - message: A string containing the message for the customer
@@ -130,13 +137,13 @@ def determine_loan_eligibility(
         "monthly_payment": monthly_payment,
         "interest_rate": interest_rate,
     }
-    msg = "Eligible for loan."
+    msg = LOAN_SUCCESSFUL_MESSAGE
 
     if (
         loan_data["total_monthly_payment"] + monthly_payment
         > customer.monthly_salary * 0.5
     ):
-        msg = "Monthly payment exceeds 50% of monthly salary"
+        msg = LOAN_UNSUCCESSFUL_MONTHLY_PAYMENT_EXCEED_50_MESSAGE
         return False, False, res_data, msg
 
     if credit_score > 50:
@@ -147,7 +154,7 @@ def determine_loan_eligibility(
             return True, False, res_data, msg
         res_data["interest_rate"] = 12
         res_data["monthly_payment"] = calculate_emi(loan_amount, tenure, 12)
-        msg = "Interest rate updated to 12% for low credit score."
+        msg = LOAN_UNSUCCESSFUL_12_MESSAGE
         return True, True, res_data, msg
 
     if credit_score > 10:
@@ -155,7 +162,7 @@ def determine_loan_eligibility(
             return True, False, res_data, msg
         res_data["interest_rate"] = 16
         res_data["monthly_payment"] = calculate_emi(loan_amount, tenure, 16)
-        msg = "Interest rate updated to 16% for low credit score."
+        msg = LOAN_UNSUCCESSFUL_16_MESSAGE
         return True, True, res_data, msg
 
-    return False, False, res_data, "Not eligible for loan."
+    return False, False, res_data, LOAN_UNSUCCESSFUL_MESSAGE
