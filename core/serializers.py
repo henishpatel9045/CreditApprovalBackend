@@ -50,3 +50,35 @@ class LoanEligibilityResponseSerializer(serializers.Serializer):
     corrected_interest_rate = serializers.FloatField()
     tenure = serializers.IntegerField()
     monthly_installment = serializers.FloatField()
+
+
+class LoanCreateResponseSerializer(serializers.Serializer):
+    """
+    Serializer for the response of the create loan API.
+    """
+
+    loan_id = serializers.IntegerField(allow_null=True)
+    customer_id = serializers.IntegerField()
+    loan_approved = serializers.BooleanField()
+    message = serializers.CharField()
+    monthly_installment = serializers.FloatField()
+
+
+class LoanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Loan
+        fields = "__all__"
+
+    def to_representation(self, instance):
+        "if extra attribute passed while creting this serializer like create_view then use LoanCreateResponseSerializer"
+        data = LoanCreateResponseSerializer(
+            data={
+                "loan_id": instance.loan_id,
+                "customer_id": instance.customer.customer_id,
+                "loan_approved": True if instance.loan_id else False,
+                "monthly_installment": instance.monthly_payment,
+                "message": self.context.get("message"),
+            }
+        )
+        data.is_valid(raise_exception=True)
+        return data.data

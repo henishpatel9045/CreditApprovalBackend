@@ -61,7 +61,7 @@ def calculate_credit_score(customer: Customer) -> (int, dict):
                     active_loan_predicate,
                     then=F("monthly_payment"),
                 ),
-                default=0,
+                default=0.0,
             )
         ),
         total_loan=Count("loan_id"),
@@ -110,42 +110,52 @@ def calculate_emi(
 
 def determine_loan_eligibility(
     loan_amount: float, interest_rate: float, tenure: int, customer: Customer
-) -> (bool, bool, dict):
+) -> (bool, bool, dict, str):
     """Determine the loan eligibility of a customer based on the credit score and monthly payment
 
     Returns:
-    - A tuple of two boolean values and a dictionary (is_eligible, is_interest_rate_updated, loan_data)
+    - A tuple of two boolean values and a dictionary (is_eligible, is_interest_rate_updated, loan_data, message)
+        - is_eligible: `True` if the customer is eligible for the loan, `False` otherwise
+        - is_interest_rate_updated: `True` if the interest rate is updated, `False` otherwise
+        - loan_data: 
+            - monthly_payment: The monthly payment for the loan
+            - interest_rate: The updated interest rate for the loan
+        - message: A string containing the message for the customer
+
     """
     credit_score, loan_data = calculate_credit_score(customer)
 
     monthly_payment = calculate_emi(loan_amount, tenure, interest_rate)
     res_data = {
-        "credit_score": credit_score,
         "monthly_payment": monthly_payment,
         "interest_rate": interest_rate,
     }
+    msg = "Eligible for loan."
 
     if (
         loan_data["total_monthly_payment"] + monthly_payment
         > customer.monthly_salary * 0.5
     ):
-        return False, False, res_data
+        msg = "Monthly payment exceeds 50% of monthly salary"
+        return False, False, res_data, msg
 
     if credit_score > 50:
-        return True, False, res_data
+        return True, False, res_data, msg
 
     if credit_score > 30:
-        if interest_rate > 12:
-            return True, False, res_data
+        if interest_rate >= 12:
+            return True, False, res_data, msg
         res_data["interest_rate"] = 12
         res_data["monthly_payment"] = calculate_emi(loan_amount, tenure, 12)
-        return True, True, res_data
+        msg = "Interest rate updated to 12% for low credit score."
+        return True, True, res_data, msg
 
     if credit_score > 10:
-        if interest_rate > 16:
-            return True, False, res_data
+        if interest_rate >= 16:
+            return True, False, res_data, msg
         res_data["interest_rate"] = 16
         res_data["monthly_payment"] = calculate_emi(loan_amount, tenure, 16)
-        return True, True, res_data
+        msg = "Interest rate updated to 16% for low credit score."
+        return True, True, res_data, msg
 
-    return False, res_data
+    return False, False, res_data, "Not eligible for loan."

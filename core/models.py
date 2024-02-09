@@ -7,7 +7,7 @@ class Customer(models.Model):
     last_name = models.CharField(max_length=100)
     age = models.IntegerField()
     phone_number = models.CharField(max_length=10)
-    monthly_salary = models.IntegerField()
+    monthly_salary = models.FloatField()
     approved_limit = models.IntegerField()
 
     def __str__(self):
@@ -16,11 +16,11 @@ class Customer(models.Model):
 class Loan(models.Model):
     loan_id = models.AutoField(primary_key=True)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    loan_amount = models.IntegerField()
-    tenure = models.IntegerField()
-    interest_rate = models.FloatField()
-    monthly_payment = models.IntegerField()
-    emis_paid_on_time = models.IntegerField()
+    loan_amount = models.IntegerField(default=0)
+    tenure = models.IntegerField(default=0)
+    interest_rate = models.FloatField(default=0.0)
+    monthly_payment = models.FloatField(default=0)
+    emis_paid_on_time = models.IntegerField(default=0)
     date_of_approval = models.DateField()
     end_date = models.DateField()
 
