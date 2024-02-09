@@ -1,3 +1,10 @@
-from django.shortcuts import render
+from rest_framework.viewsets import GenericViewSet
+from rest_framework.mixins import CreateModelMixin
 
-# Create your views here.
+from core.models import Customer
+from core.serializers import CustomerSerializer
+
+
+class CustomerRegisterViewSet(CreateModelMixin, GenericViewSet):
+    queryset = Customer.objects.all()
+    serializer_class = CustomerSerializer
