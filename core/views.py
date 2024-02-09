@@ -2,20 +2,23 @@ import calendar
 import datetime
 from dateutil import relativedelta
 from rest_framework.viewsets import GenericViewSet
-from rest_framework.mixins import CreateModelMixin
+from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin
 from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
-from core.models import Customer
+from core.models import Customer, Loan
 from core.serializers import (
     CustomerSerializer,
     LoanRequestBodySerializer,
     LoanEligibilityResponseSerializer,
     LoanSerializer,
     LoanCreateResponseSerializer,
+    LoanSingleRecordSerializer,
+    CustomerLoanSerializer,
 )
 from core.utils import determine_loan_eligibility
 from core.decorators import handle_exceptions
@@ -25,9 +28,16 @@ class CustomerRegisterViewSet(CreateModelMixin, GenericViewSet):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
 
+    @swagger_auto_schema(
+        tags=["Customer"],
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
 
 class LoanEligibilityCheckAPIView(APIView):
     @swagger_auto_schema(
+        tags=["Loan"],
         operation_description=(
             "Check if the customer is eligible for the loan. \
             If the customer is not eligible, the API will return the \
@@ -76,6 +86,7 @@ class CreateLoanAPIView(APIView):
         return end_date
 
     @swagger_auto_schema(
+        tags=["Loan"],
         operation_description=(
             "Create a loan for the customer. \
             If the customer is not eligible, the loan will not be approved. \
@@ -130,5 +141,32 @@ class CreateLoanAPIView(APIView):
         serializer.save()
         return Response(
             serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+
+class LoanRetrieveViewSet(RetrieveModelMixin, GenericViewSet):
+    queryset = Loan.objects.all().prefetch_related("customer")
+    serializer_class = LoanSingleRecordSerializer
+
+    @swagger_auto_schema(
+        tags=["Loan"],
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+
+class CustomerLoansAPIView(APIView):
+    @swagger_auto_schema(
+        tags=["Customer"],
+        operation_description="Retrieve all the loans of a customer",
+        responses={200: CustomerLoanSerializer(many=True)},
+    )
+    @handle_exceptions
+    def get(self, request: Request, customer_id: int) -> Response:
+        loans = Loan.objects.filter(customer_id=customer_id)
+        data = CustomerLoanSerializer(loans, many=True)
+        return Response(
+            data.data,
             status=status.HTTP_200_OK,
         )

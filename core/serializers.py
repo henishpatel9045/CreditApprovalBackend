@@ -1,6 +1,8 @@
+import datetime
 from rest_framework import serializers
 
 from core.models import Customer, Loan
+from core.utils import calculate_emis_till_date
 
 
 class CustomerSerializer(serializers.ModelSerializer):
@@ -82,3 +84,52 @@ class LoanSerializer(serializers.ModelSerializer):
         )
         data.is_valid(raise_exception=True)
         return data.data
+
+
+class CustomerRetrieveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Customer
+        fields = (
+            "customer_id",
+            "first_name",
+            "last_name",
+            "age",
+            "phone_number",
+        )
+
+
+class LoanSingleRecordSerializer(serializers.ModelSerializer):
+    customer = CustomerRetrieveSerializer()
+    monthly_installment = serializers.FloatField(source="monthly_payment")
+
+    class Meta:
+        model = Loan
+        fields = (
+            "loan_id",
+            "customer",
+            "loan_amount",
+            "interest_rate",
+            "tenure",
+            "monthly_installment",
+        )
+
+
+class CustomerLoanSerializer(serializers.ModelSerializer):
+    monthly_installment = serializers.FloatField(source="monthly_payment")
+    repayments_left = serializers.SerializerMethodField()
+
+    def get_repayments_left(self, obj: Loan) -> int:
+        emis_till_date = calculate_emis_till_date(
+            obj.tenure, obj.emis_paid_on_time, obj.date_of_approval, obj.end_date
+        )
+        return obj.tenure - emis_till_date
+
+    class Meta:
+        model = Loan
+        fields = (
+            "loan_id",
+            "loan_amount",
+            "interest_rate",
+            "monthly_installment",
+            "repayments_left",
+        )
