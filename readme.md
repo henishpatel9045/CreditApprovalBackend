@@ -22,13 +22,15 @@ git clone https://github.com/henishpatel9045/CreditApprovalBackend
 cd CreditApprovalBackend
 ```
 
-3. Run the docker-compose file
+3. Create a `.env` file in the root directory of the project from the `.env.example` file and fill in the required environment variables.
+
+4. Run the docker-compose file
 
 ```bash
 docker-compose up --build -d
 ```
 
-4. The backend will be running on `http://localhost:8000`
+5. The backend will be running on `http://localhost:8000`
 
 ## API Documentation
 
